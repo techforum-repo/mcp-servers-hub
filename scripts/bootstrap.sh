@@ -1,24 +1,26 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE}")/.." && pwd)"
-SHARED_DIR="/Users/shared/mcp-servers-hub"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SERVER_DIR="$REPO_ROOT/servers/sample-internal-tool"
+ENTRYPOINT="$SERVER_DIR/dist/index.js"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/mcp-servers-hub"
 
-echo "Step 1: Provisioning standard machine path location..."
-sudo mkdir -p "$SHARED_DIR"
-sudo chown -R $(whoami) "$SHARED_DIR"
-
-echo "Step 2: Transferring codebases to deployment workspace..."
-rsync -av --exclude='node_modules' --exclude='dist' --exclude='.git' "$REPO_ROOT/" "$SHARED_DIR/"
-
-echo "Step 3: Compiling internal custom servers..."
-cd "$SHARED_DIR/servers/sample-internal-tool"
-npm install
+echo "Building sample-internal-tool from $SERVER_DIR..."
+cd "$SERVER_DIR"
+npm ci
 npm run build
 
-echo "Step 4: Symlinking system user configurations..."
-mkdir -p "$HOME/.codex"
-ln -sf "$SHARED_DIR/bootstrap/claude-code-user.json" "$HOME/.claude.json"
-ln -sf "$SHARED_DIR/bootstrap/codex-user.toml" "$HOME/.codex/config.toml"
+mkdir -p "$CONFIG_DIR"
+escaped_entrypoint=$(printf '%s' "$ENTRYPOINT" | sed 's/[&|]/\\\\&/g')
+sed "s|__MCP_SERVER_ENTRYPOINT__|$escaped_entrypoint|g" "$REPO_ROOT/bootstrap/claude-code-user.json" > "$CONFIG_DIR/claude-code-user.json"
+sed "s|__MCP_SERVER_ENTRYPOINT__|$escaped_entrypoint|g" "$REPO_ROOT/bootstrap/codex-user.toml" > "$CONFIG_DIR/codex-user.toml"
 
-echo "🚀 All MCP servers configured and successfully deployed!"
+echo
+echo "Built: $ENTRYPOINT"
+echo "Generated safe configuration snippets:"
+echo "  $CONFIG_DIR/claude-code-user.json"
+echo "  $CONFIG_DIR/codex-user.toml"
+echo
+echo "No global configuration was replaced. Merge the server entries you approve into"
+echo "your existing Claude Code and Codex configuration files."

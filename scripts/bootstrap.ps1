@@ -1,26 +1,24 @@
-$RepoRoot = Resolve-Path "$PSScriptRoot\.."
-$SharedDir = "C:\Users\Public\mcp-servers-hub"
+$ErrorActionPreference = "Stop"
 
-# Create a clean absolute workspace anchor for the host machine config
-If (!(Test-Path $SharedDir)) { New-Item -ItemType Directory -Path $SharedDir -Force }
-Copy-Item -Path "$RepoRoot\*" -Destination $SharedDir -Recurse -Force -Exclude "node_modules","dist",".git"
+$RepoRoot = (Resolve-Path "$PSScriptRoot\..").Path
+$ServerDir = Join-Path $RepoRoot "servers\sample-internal-tool"
+$EntryPoint = Join-Path $ServerDir "dist\index.js"
+$ConfigRoot = if ($env:APPDATA) { $env:APPDATA } else { $env:USERPROFILE }
+$ConfigDir = Join-Path $ConfigRoot "mcp-servers-hub"
 
-Write-Host "Building custom tools..." -ForegroundColor Cyan
-Set-Location "$SharedDir\servers\sample-internal-tool"
-npm install
+Write-Host "Building sample-internal-tool from $ServerDir..." -ForegroundColor Cyan
+Set-Location $ServerDir
+npm ci
 npm run build
 
-Write-Host "Symlinking cross-platform runtimes..." -ForegroundColor Cyan
-$ClaudePath = "$env:USERPROFILE\.claude.json"
-$CodexDir   = "$env:USERPROFILE\.codex"
-$CodexPath  = "$CodexDir\config.toml"
+New-Item -ItemType Directory -Path $ConfigDir -Force | Out-Null
+$ClaudeTemplate = Get-Content (Join-Path $RepoRoot "bootstrap\claude-code-user.json") -Raw
+$CodexTemplate = Get-Content (Join-Path $RepoRoot "bootstrap\codex-user.toml") -Raw
+$ClaudeTemplate.Replace("__MCP_SERVER_ENTRYPOINT__", $EntryPoint) | Set-Content (Join-Path $ConfigDir "claude-code-user.json") -NoNewline
+$CodexTemplate.Replace("__MCP_SERVER_ENTRYPOINT__", $EntryPoint) | Set-Content (Join-Path $ConfigDir "codex-user.toml") -NoNewline
 
-If (!(Test-Path $CodexDir)) { New-Item -ItemType Directory -Path $CodexDir -Force }
-if (Test-Path $ClaudePath) { Remove-Item $ClaudePath -Force }
-if (Test-Path $CodexPath) { Remove-Item $CodexPath -Force }
-
-# Establish exact Windows Junction Symbolic Links
-New-Item -ItemType SymbolicLink -Path $ClaudePath -Value "$SharedDir\bootstrap\claude-code-user.json" | Out-Null
-New-Item -ItemType SymbolicLink -Path $CodexPath -Value "$SharedDir\bootstrap\codex-user.toml" | Out-Null
-
-Write-Host "✓ Windows Host Architecture Environments Matched Natively." -ForegroundColor Green
+Write-Host "Built: $EntryPoint" -ForegroundColor Green
+Write-Host "Generated safe configuration snippets:" -ForegroundColor Green
+Write-Host "  $(Join-Path $ConfigDir 'claude-code-user.json')"
+Write-Host "  $(Join-Path $ConfigDir 'codex-user.toml')"
+Write-Host "No global configuration was replaced. Merge the server entries you approve into your existing Claude Code and Codex configuration files." -ForegroundColor Yellow

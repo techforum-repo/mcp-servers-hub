@@ -9,7 +9,7 @@
     },
     "sample-internal-tool": {
       "command": "node",
-      "args": ["/Users/shared/mcp-servers-hub/servers/sample-internal-tool/dist/index.js"]
+      "args": ["__MCP_SERVER_ENTRYPOINT__"]
     }
   }
 }
