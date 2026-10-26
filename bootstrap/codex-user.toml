@@ -1,0 +1,12 @@
+[mcp_servers.github-external-tool]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-github"]
+enabled = true
+
+[mcp_servers.github-external-tool.env]
+GITHUB_PERSONAL_ACCESS_TOKEN = "${GITHUB_TOKEN}"
+
+[mcp_servers.sample-internal-tool]
+command = "node"
+args = ["/Users/shared/mcp-servers-hub/servers/sample-internal-tool/dist/index.js"]
+enabled = true

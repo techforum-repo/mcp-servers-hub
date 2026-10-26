@@ -1,0 +1,14 @@
+# Node Compilation Artifacts
+node_modules/
+dist/
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Security & Credential safeguards
+.env
+.env.*
+*.token
+*.pem

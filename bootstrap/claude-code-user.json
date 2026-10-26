@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "github-external-tool": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${ENV:GITHUB_TOKEN}"
+      }
+    },
+    "sample-internal-tool": {
+      "command": "node",
+      "args": ["/Users/shared/mcp-servers-hub/servers/sample-internal-tool/dist/index.js"]
+    }
+  }
+}
