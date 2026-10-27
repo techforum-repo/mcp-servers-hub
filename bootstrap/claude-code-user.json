@@ -1,15 +1,15 @@
 {
   "mcpServers": {
-    "github-external-tool": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${ENV:GITHUB_TOKEN}"
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_TOKEN}"
       }
     },
     "sample-internal-tool": {
       "command": "node",
-      "args": ["__MCP_SERVER_ENTRYPOINT__"]
+      "args": ["__SERVERS_DIR__/sample-internal-tool/dist/index.js"]
     }
   }
 }

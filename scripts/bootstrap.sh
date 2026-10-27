@@ -2,25 +2,26 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SERVER_DIR="$REPO_ROOT/servers/sample-internal-tool"
-ENTRYPOINT="$SERVER_DIR/dist/index.js"
+SERVERS_DIR="$REPO_ROOT/servers"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/mcp-servers-hub"
 
-echo "Building sample-internal-tool from $SERVER_DIR..."
-cd "$SERVER_DIR"
-npm ci
-npm run build
+# Build every server under servers/ that has a package.json.
+for server_dir in "$SERVERS_DIR"/*/; do
+    [ -f "$server_dir/package.json" ] || continue
+    echo "Building $(basename "$server_dir") from $server_dir..."
+    (cd "$server_dir" && npm ci && npm run build)
+done
 
 mkdir -p "$CONFIG_DIR"
-escaped_entrypoint=$(printf '%s' "$ENTRYPOINT" | sed 's/[&|]/\\\\&/g')
-sed "s|__MCP_SERVER_ENTRYPOINT__|$escaped_entrypoint|g" "$REPO_ROOT/bootstrap/claude-code-user.json" > "$CONFIG_DIR/claude-code-user.json"
-sed "s|__MCP_SERVER_ENTRYPOINT__|$escaped_entrypoint|g" "$REPO_ROOT/bootstrap/codex-user.toml" > "$CONFIG_DIR/codex-user.toml"
+escaped_servers_dir=$(printf '%s' "$SERVERS_DIR" | sed 's/[&|]/\\&/g')
+sed "s|__SERVERS_DIR__|$escaped_servers_dir|g" "$REPO_ROOT/bootstrap/claude-code-user.json" > "$CONFIG_DIR/claude-code-user.json"
+sed "s|__SERVERS_DIR__|$escaped_servers_dir|g" "$REPO_ROOT/bootstrap/codex-user.toml" > "$CONFIG_DIR/codex-user.toml"
 
 echo
-echo "Built: $ENTRYPOINT"
 echo "Generated safe configuration snippets:"
 echo "  $CONFIG_DIR/claude-code-user.json"
 echo "  $CONFIG_DIR/codex-user.toml"
 echo
 echo "No global configuration was replaced. Merge the server entries you approve into"
-echo "your existing Claude Code and Codex configuration files."
+echo "your existing Claude Code and Codex configuration files, or add one at a time:"
+echo "  claude mcp add-json --scope user <name> '<entry JSON from the snippet>'"

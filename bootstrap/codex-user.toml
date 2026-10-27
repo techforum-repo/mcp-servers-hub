@@ -1,12 +1,11 @@
-[mcp_servers.github-external-tool]
-command = "npx"
-args = ["-y", "@modelcontextprotocol/server-github"]
+# Codex does not expand ${VAR} inside config values; it reads the token from the
+# named environment variable at connection time instead.
+[mcp_servers.github]
+url = "https://api.githubcopilot.com/mcp/"
+bearer_token_env_var = "GITHUB_TOKEN"
 enabled = true
-
-[mcp_servers.github-external-tool.env]
-GITHUB_PERSONAL_ACCESS_TOKEN = "${GITHUB_TOKEN}"
 
 [mcp_servers.sample-internal-tool]
 command = "node"
-args = ["__MCP_SERVER_ENTRYPOINT__"]
+args = ["__SERVERS_DIR__/sample-internal-tool/dist/index.js"]
 enabled = true

@@ -1,45 +1,34 @@
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import { z } from "zod";
 
 // Initialize a generic internal server instance
-const server = new Server(
-  { name: "sample-internal-tool", version: "1.0.0" },
-  { capabilities: { tools: {} } }
+const server = new McpServer({ name: "sample-internal-tool", version: "1.1.0" });
+
+// Register available internal tools exposed to the agent. The zod schema is
+// published to the client as JSON Schema and validated before the handler runs.
+server.registerTool(
+  "fetch_martech_status",
+  {
+    title: "Fetch MarTech status",
+    description: "A secure custom proxy tool that checks an internal system status payload.",
+    inputSchema: {
+      endpointId: z
+        .string()
+        .regex(/^[A-Za-z0-9_-]{1,64}$/, "Use letters, digits, '-' or '_' (max 64)")
+        .describe("The internal cluster target code."),
+    },
+    annotations: { readOnlyHint: true, openWorldHint: false },
+  },
+  async ({ endpointId }) => ({
+    content: [
+      {
+        type: "text",
+        text: `[SUCCESS] Secure internal bridge reached. Endpoint execution status for cluster '${endpointId}' is operational.`,
+      },
+    ],
+  })
 );
-
-// 1. Register available internal tools exposed to the agent
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [
-    {
-      name: "fetch_martech_status",
-      description: "A secure custom proxy tool that checks an internal system status payload.",
-      inputSchema: {
-        type: "object",
-        properties: {
-          endpointId: { type: "string", description: "The internal cluster target code." }
-        },
-        required: ["endpointId"]
-      }
-    }
-  ]
-}));
-
-// 2. Handle execution routing logic when the agent invokes the tool
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  if (request.params.name === "fetch_martech_status") {
-    const endpointId = request.params.arguments?.endpointId;
-    return {
-      content: [
-        {
-          type: "text",
-          text: `[SUCCESS] Secure internal bridge reached. Endpoint execution status for cluster '${endpointId}' is operational.`
-        }
-      ]
-    };
-  }
-  throw new Error(`Tool not found: ${request.params.name}`);
-});
 
 // Run server over standard I/O streams
 const transport = new StdioServerTransport();

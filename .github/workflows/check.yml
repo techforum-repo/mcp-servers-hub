@@ -1,0 +1,29 @@
+name: Check servers
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build, type-check and smoke-test every server
+        run: |
+          for dir in servers/*/; do
+            [ -f "$dir/package.json" ] || continue
+            echo "::group::$dir"
+            (cd "$dir" && npm ci && npm run check && npm run build)
+            # The server must answer an MCP initialize request over stdio.
+            printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}' \
+              | timeout 10 node "$dir/dist/index.js" | grep -q '"serverInfo"'
+            echo "::endgroup::"
+          done
+      - name: Validate configuration templates
+        run: |
+          python3 -m json.tool bootstrap/claude-code-user.json > /dev/null
+          python3 -c "import tomllib; tomllib.load(open('bootstrap/codex-user.toml', 'rb'))"
