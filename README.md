@@ -2,6 +2,12 @@
 
 Shared, versioned Model Context Protocol (MCP) server implementations and configuration templates.
 
+## Use it as your own MCP hub
+
+This repository is a framework: fork it (or use it as a template), add each server as its own folder under `servers/`, and add its entry to both configuration templates in `bootstrap/` so it can be registered in **Claude Code** and **Codex**. The bootstrap scripts and CI pick up every server folder automatically.
+
+`servers/sample-internal-tool/` is a minimal, read-only TypeScript server showing the expected layout: `McpServer.registerTool` with a zod input schema, a lockfile, and `build`/`check` scripts. Copy it as the starting point for a new server.
+
 ## Prerequisites
 
 The bundled sample server requires Node.js 20 or later and npm.
