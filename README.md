@@ -48,3 +48,7 @@ The GitHub entry uses GitHub's official remote MCP server (`https://api.githubco
 
 - Claude Code expands `${GITHUB_TOKEN}` in the `Authorization` header.
 - Codex does not expand variables inside config values, so its entry uses `bearer_token_env_var = "GITHUB_TOKEN"` instead.
+
+## License
+
+[MIT](LICENSE)
