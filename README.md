@@ -1,5 +1,7 @@
 # MCP Servers Hub
 
+[![CI](https://github.com/techforum-repo/mcp-servers-hub/actions/workflows/check.yml/badge.svg)](https://github.com/techforum-repo/mcp-servers-hub/actions/workflows/check.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Shared, versioned Model Context Protocol (MCP) server implementations and configuration templates.
 
 ## Use it as your own MCP hub
